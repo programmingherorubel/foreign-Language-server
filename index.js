@@ -95,6 +95,21 @@ async function run() {
         res.send(result)
       
     });
+
+    // edit course collection 
+    app.put('/newcourseupdate/:id',async(req,res)=>{
+      const id = req.params.id 
+      const data = req.body 
+      const query = {_id:new ObjectId(id)}
+      const updateDoc = {
+        $set:{
+          ...data
+        }
+      }
+      const result = await courseCollection.updateOne(query,updateDoc)
+      console.log(result)
+      res.send(result)
+    })
    
     // admin role input 
     app.put('/admin/:email',async(req,res)=>{
@@ -153,6 +168,18 @@ app.get('/editcourse/:id',async(req,res)=>{
   const query = {_id: new ObjectId(id)}
   const result = await courseCollection.findOne(query)
   res.send(result)
+})
+
+// add to cart
+app.post('/addtocart',async(req,res)=>{
+    const selectCourse = req.body 
+    const result = await cartCollection.insertOne(selectCourse)
+    console.log(result)
+    res.send(result)
+})
+app.get('/addtocart',async(req,res)=>{
+    const result = await cartCollection.find({}).toArray()
+    res.send(result)
 })
 
 
