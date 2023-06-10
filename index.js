@@ -177,9 +177,12 @@ app.post('/addtocart',async(req,res)=>{
     console.log(result)
     res.send(result)
 })
-app.get('/addtocart',async(req,res)=>{
-    const result = await cartCollection.find({}).toArray()
-    res.send(result)
+app.get('/addtocart/:email',async(req,res)=>{
+  const email = req.params.email 
+  const query = {userEmail:email}
+  const result = await cartCollection.find(query).toArray()
+  res.send(result)
+    
 })
 
 
