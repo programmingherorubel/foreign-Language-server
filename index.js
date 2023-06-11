@@ -3,6 +3,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 require('dotenv').config()
+const jwt = require("jsonwebtoken");
 const stripe = require("stripe")(process.env.PAYEMNT_KEY);
 const port = process.env.PORT || 9000
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.tdolxqi.mongodb.net/?retryWrites=true&w=majority`;
@@ -16,6 +17,30 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 app.use(express.json())
+
+
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  console.log(authorization);
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
+  }
+  // bearer token
+  const token = authorization.split(" ")[1];
+  console.log(token);
+  jwt.verify(token, process.env.JWT_TOKEN, (error, decoded) => {
+    if (error) {
+      return res
+        .status(401)
+        .send({ error: true, message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 
 
 
@@ -40,6 +65,16 @@ async function run() {
     const cartCollection = database.collection("selectcourse")
     const paymentsCollection = database.collection("payments")
 
+
+    // JWT
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_TOKEN, {
+        expiresIn: "2h",
+      });
+      // console.log({ token });
+      res.send({ token });
+    });
 
     app.put('/users/:email', async (req, res) => {
       const email = req.params.email
@@ -226,6 +261,29 @@ app.post("/create-payment-intent", async (req, res) => {
     clientSecret: paymentIntent.client_secret,
   });
 });
+
+
+app.get('/admin/:email',async(req,res)=>{
+  const email = req.params.email 
+  const query = {email : email }
+  const user = await usersCollection.findOne(query)
+  let isAdmin = false 
+    if(user?.role === 'admin'){
+      isAdmin = true 
+    }
+  res.send({"admin":isAdmin})
+})
+
+app.get('/instractor/:email',async(req,res)=>{
+  const email = req.params.email 
+  const query = {email : email }
+  const user = await usersCollection.findOne(query)
+  let isInstractor = false 
+    if(user?.role === 'instractor'){
+      isInstractor = true 
+    }
+  res.send({"instractor":isInstractor})
+})
 
   } finally {
     // await client.close();
