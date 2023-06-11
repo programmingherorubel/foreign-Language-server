@@ -3,8 +3,10 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 require('dotenv').config()
+const stripe = require("stripe")(process.env.PAYEMNT_KEY);
 const port = process.env.PORT || 9000
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.tdolxqi.mongodb.net/?retryWrites=true&w=majority`;
+
 
 // middleware
 const corsOptions = {
@@ -36,6 +38,7 @@ async function run() {
     const usersCollection = database.collection("users");
     const courseCollection = database.collection("course");
     const cartCollection = database.collection("selectcourse")
+    const paymentsCollection = database.collection("payments")
 
 
     app.put('/users/:email', async (req, res) => {
@@ -185,7 +188,44 @@ app.get('/addtocart/:email',async(req,res)=>{
     
 })
 
+app.get('/addtocart/payment/:id',async (req,res)=>{
+  const id = req.params.id 
+  const query = {_id:new ObjectId(id)}
+  const result = await cartCollection.findOne(query)
+  res.send(result)
+})
 
+// payments
+app.post('/payments',async(req,res)=>{
+  const info = req.body 
+  const id = info.beforePaymentClassId  
+  const result = await paymentsCollection.insertOne(info)
+  const qyirey = {_id:new ObjectId(id)}
+  const deleteResult = await cartCollection.deleteOne(qyirey)
+
+  res.send({result,deleteResult})
+})
+
+app.get('/payments/:email',async(req,res)=>{
+  const email = req.params.email 
+  const query = {email:email}
+  const result = await paymentsCollection.find(query).toArray()
+  res.send(result)
+})
+
+// create payment intent
+app.post("/create-payment-intent", async (req, res) => {
+  const { price } = req.body;
+  const amount = price * 100;
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    payment_method_types: ["card"],
+  });
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
 
   } finally {
     // await client.close();
