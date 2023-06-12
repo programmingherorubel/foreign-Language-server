@@ -286,7 +286,7 @@ app.get('/instractor/:email',async(req,res)=>{
 })
 
   } finally {
-    // await client.close();
+    // await client.close()
   }
 }
 run().catch(console.dir);
@@ -297,5 +297,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Examples app listening on port ${port}`)
 })
