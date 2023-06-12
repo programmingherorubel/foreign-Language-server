@@ -21,7 +21,7 @@ app.use(express.json())
 
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
-  console.log(authorization);
+
   if (!authorization) {
     return res
       .status(401)
@@ -74,6 +74,57 @@ async function run() {
       });
       // console.log({ token });
       res.send({ token });
+    });
+
+    // verifyAdmin
+    // warning : use verifyJWT before using verifyAdmin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+
+    // check admin
+    app.get("/users/admin/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (req.decoded.email !== email) {
+        return res.send({ admin: false });
+      }
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === "admin" };
+      res.send(result);
+    });
+
+    // verifyInstructor
+
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "instractor") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+// check instructor
+    app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (req.decoded.email !== email) {
+        return res.send({ instractor: false });
+      }
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const result = { instractor: user?.role === "instractor" };
+      res.send(result);
     });
 
     app.put('/users/:email', async (req, res) => {
@@ -263,27 +314,6 @@ app.post("/create-payment-intent", async (req, res) => {
 });
 
 
-app.get('/admin/:email',async(req,res)=>{
-  const email = req.params.email 
-  const query = {email : email }
-  const user = await usersCollection.findOne(query)
-  let isAdmin = false 
-    if(user?.role === 'admin'){
-      isAdmin = true 
-    }
-  res.send({"admin":isAdmin})
-})
-
-app.get('/instractor/:email',async(req,res)=>{
-  const email = req.params.email 
-  const query = {email : email }
-  const user = await usersCollection.findOne(query)
-  let isInstractor = false 
-    if(user?.role === 'instractor'){
-      isInstractor = true 
-    }
-  res.send({"instractor":isInstractor})
-})
 
   } finally {
     // await client.close()
