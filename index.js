@@ -147,7 +147,7 @@ async function run() {
     // new course 
     app.post('/newcourse', async (req, res) => {
       const course = req.body
-      const result = await courseCollection.insertOne(course)
+       const result = await courseCollection.insertOne(course)
       res.send(result)
     })
 
@@ -313,7 +313,12 @@ app.post("/create-payment-intent", async (req, res) => {
   });
 });
 
-
+app.delete('/deleteclass/:id',async(req,res)=>{
+  const id = req.params.id;
+  const query = {_id:new ObjectId(id)}
+  const reuslt = await courseCollection.deleteOne(query)
+  res.send(reuslt)
+})
 
   } finally {
     // await client.close()
